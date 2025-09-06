@@ -115,17 +115,6 @@ app.use(session({
   rolling: true // Reset expiration on activity
 }));
 
-// Free tier session handling improvements
-app.use((req, res, next) => {
-  // Update session activity more frequently on free tier to prevent data loss
-  if (process.env.RENDER && !process.env.RENDER_SERVICE_PLAN) {
-    // This is a free tier Render service
-    if (req.session.isAuthenticated) {
-      req.session.lastActivity = Date.now();
-    }
-  }
-  next();
-});
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -147,39 +136,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Session security monitoring middleware
-app.use((req, res, next) => {
-  // Check for potential session hijacking
-  if (req.session.userId && req.session.lastActivity) {
-    const timeSinceLastActivity = Date.now() - req.session.lastActivity;
-    const userAgent = req.get('User-Agent');
-    
-    // Log suspicious session activity (more than 12 hours inactive but session still valid)
-    if (timeSinceLastActivity > 12 * 60 * 60 * 1000) {
-      logSecurityEvent('SESSION_EXPIRED', {
-        ip: req.ip,
-        userAgent: userAgent,
-        userId: req.session.userId,
-        endpoint: req.path,
-        additional: { 
-          sessionId: req.sessionID,
-          timeSinceLastActivity,
-          suspiciousActivity: 'Long inactive session reactivated'
-        }
-      });
-    }
-  }
-  
-  next();
-});
 
 
 // Extend session types
 declare module 'express-session' {
   interface SessionData {
     userId?: string;
-    loginTime?: number;
-    lastActivity?: number;
     isAuthenticated?: boolean;
   }
 }
@@ -265,8 +227,6 @@ const authenticateToken = (req: AuthRequest, res: express.Response, next: expres
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
     
-    // Update session activity
-    req.session.lastActivity = Date.now();
     req.userId = user.userId;
     next();
   });
@@ -324,8 +284,6 @@ app.post('/api/auth/login', authLimiter, (req, res) => {
 
   // Initialize session
   req.session.userId = 'quiz-user';
-  req.session.loginTime = Date.now();
-  req.session.lastActivity = Date.now();
   req.session.isAuthenticated = true;
 
   logSecurityEvent('LOGIN_SUCCESS', {
