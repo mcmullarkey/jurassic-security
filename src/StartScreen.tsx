@@ -2,7 +2,7 @@ interface StartScreenProps {
   onBegin: () => void;
 }
 
-function StartScreen({ onBegin }: StartScreenProps): React.JSX.Element {
+function StartScreen({ onBegin }: StartScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 sm:p-8 relative">
       {/* Background logo */}

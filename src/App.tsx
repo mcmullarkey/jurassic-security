@@ -17,7 +17,7 @@ interface Question {
 
 type QuizResult = 'correct' | 'incorrect' | null;
 
-function App(): React.JSX.Element {
+function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);

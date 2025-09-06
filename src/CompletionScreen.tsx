@@ -5,7 +5,7 @@ interface CompletionScreenProps {
   securityLevel: number;
 }
 
-function CompletionScreen({}: CompletionScreenProps): React.JSX.Element {
+function CompletionScreen({}: CompletionScreenProps) {
   const [secretCode, setSecretCode] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
 

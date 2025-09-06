@@ -3,7 +3,7 @@ interface AnswerInputProps {
   onChange: (value: string) => void;
 }
 
-function AnswerInput({ value, onChange }: AnswerInputProps): React.JSX.Element {
+function AnswerInput({ value, onChange }: AnswerInputProps) {
   return (
     <div className="flex flex-col items-center gap-2 p-4">
       <input 

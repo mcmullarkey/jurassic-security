@@ -5,7 +5,7 @@ interface LoginScreenProps {
   onLogin: () => void;
 }
 
-function LoginScreen({ onLogin }: LoginScreenProps): React.JSX.Element {
+function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);

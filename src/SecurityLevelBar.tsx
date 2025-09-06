@@ -3,7 +3,7 @@ interface SecurityLevelBarProps {
   maxLevel?: number;
 }
 
-function SecurityLevelBar({ level, maxLevel = 5 }: SecurityLevelBarProps): React.JSX.Element {
+function SecurityLevelBar({ level, maxLevel = 5 }: SecurityLevelBarProps) {
   const levelNames: Record<number, string> = {
     1: "Trainee",
     2: "Entry Level", 
