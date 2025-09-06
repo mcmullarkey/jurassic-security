@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -26,7 +25,6 @@ const requiredEnvVars = [
   'ANSWER_3', 
   'ANSWER_4',
   'SECRET_CODE',
-  'JWT_SECRET',
   'SESSION_SECRET'
 ];
 
@@ -39,16 +37,10 @@ if (missingEnvVars.length > 0) {
 }
 
 // Extract environment variables after validation
-const JWT_SECRET = process.env.JWT_SECRET!;
 const SESSION_SECRET = process.env.SESSION_SECRET!;
 const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD!;
 
-// Validate JWT and session secret lengths for security
-if (JWT_SECRET.length < 32) {
-  console.error('❌ JWT_SECRET must be at least 32 characters long for security');
-  process.exit(1);
-}
-
+// Validate session secret length for security
 if (SESSION_SECRET.length < 32) {
   console.error('❌ SESSION_SECRET must be at least 32 characters long for security');
   process.exit(1);
@@ -189,10 +181,8 @@ const correctAnswers: Record<number, string> = {
   4: process.env.ANSWER_4!
 };
 
-// Middleware to verify JWT token and session
+// Simple session authentication middleware  
 const authenticateToken = (req: AuthRequest, res: express.Response, next: express.NextFunction) => {
-  const token = req.cookies.auth_token;
-
   // Check if session exists and is authenticated
   if (!req.session.isAuthenticated || !req.session.userId) {
     logSecurityEvent('UNAUTHORIZED_ACCESS', {
@@ -204,32 +194,8 @@ const authenticateToken = (req: AuthRequest, res: express.Response, next: expres
     return res.status(401).json({ error: 'Session required' });
   }
 
-  if (!token) {
-    logSecurityEvent('UNAUTHORIZED_ACCESS', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      endpoint: req.path,
-      additional: { reason: 'No auth token provided', sessionId: req.sessionID }
-    });
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-    if (err) {
-      // Destroy session on invalid token
-      req.session.destroy(() => {});
-      logSecurityEvent('INVALID_TOKEN', {
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        endpoint: req.path,
-        additional: { reason: err.message, sessionId: req.sessionID }
-      });
-      return res.status(403).json({ error: 'Invalid or expired token' });
-    }
-    
-    req.userId = user.userId;
-    next();
-  });
+  req.userId = req.session.userId;
+  next();
 };
 
 // Input validation schemas
@@ -267,22 +233,7 @@ app.post('/api/auth/login', authLimiter, (req, res) => {
     return res.status(401).json({ error: 'Invalid password' });
   }
 
-  // Generate JWT token
-  const token = jwt.sign(
-    { userId: 'quiz-user' },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-
-  // Set httpOnly cookie
-  res.cookie('auth_token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  });
-
-  // Initialize session
+  // Initialize session - that's all we need!
   req.session.userId = 'quiz-user';
   req.session.isAuthenticated = true;
 
