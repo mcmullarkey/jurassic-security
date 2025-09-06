@@ -305,40 +305,6 @@ app.get('/api/questions', authenticateToken, (req: AuthRequest, res) => {
   res.json({ questions });
 });
 
-// Logout endpoint
-app.post('/api/auth/logout', (req, res) => {
-  const sessionId = req.sessionID;
-  const userId = req.session.userId;
-  
-  // Destroy session
-  req.session.destroy((err) => {
-    if (err) {
-      appLogger.error('Session destruction failed', { error: err, sessionId });
-    }
-  });
-  
-  res.clearCookie('auth_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  });
-  
-  res.clearCookie('quiz_session', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  });
-
-  logSecurityEvent('LOGIN_SUCCESS', {
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    userId: userId,
-    endpoint: '/api/auth/logout',
-    additional: { sessionId, action: 'logout' }
-  });
-  
-  res.json({ success: true, message: 'Logged out successfully' });
-});
 
 // Submit answer (protected)
 app.post('/api/questions/:questionId/answer', authenticateToken, (req: AuthRequest, res) => {

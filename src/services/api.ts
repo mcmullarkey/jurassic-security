@@ -102,13 +102,6 @@ class ApiService {
     return response.json();
   }
 
-  async logout(): Promise<void> {
-    await fetch(`${API_BASE_URL}/auth/logout`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      credentials: 'include'
-    });
-  }
 
   // Check auth by trying to fetch questions (server will return 401 if not authenticated)
   async checkAuth(): Promise<boolean> {
