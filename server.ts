@@ -9,7 +9,12 @@ import Joi from 'joi';
 import session from 'express-session';
 import csrf from 'csrf';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { appLogger, securityLogger, logSecurityEvent, SecurityEvents } from './logger.js';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load server environment variables
 dotenv.config({ path: '.env.server' });
