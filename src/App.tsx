@@ -60,19 +60,27 @@ function App() {
       setQuestions(fetchedQuestions);
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load questions');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load questions';
+      setError(errorMessage);
+      // Only log out if we're sure it's an authentication issue
       if (err instanceof Error && err.message === 'Authentication expired') {
+        console.log('Authentication expired, logging out...');
         setIsLoggedIn(false);
         setHasStarted(false);
+      } else {
+        console.log('Non-auth error loading questions:', errorMessage);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = (): void => {
+  const handleLogin = async (): Promise<void> => {
     setIsLoggedIn(true);
-    loadQuestions();
+    // Add a small delay to ensure the login session is fully established
+    setTimeout(async () => {
+      await loadQuestions();
+    }, 100);
   };
   
   const advanceToNextQuestion = (): void => {
@@ -106,10 +114,14 @@ function App() {
         setTimeout(() => setResult(null), 750);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit answer');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit answer';
+      setError(errorMessage);
       if (err instanceof Error && err.message === 'Authentication expired') {
+        console.log('Authentication expired during answer submit, logging out...');
         setIsLoggedIn(false);
         setHasStarted(false);
+      } else {
+        console.log('Non-auth error submitting answer:', errorMessage);
       }
     } finally {
       setLoading(false);

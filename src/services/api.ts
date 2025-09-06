@@ -34,7 +34,22 @@ class ApiService {
     return headers;
   }
 
+  async clearCookies(): Promise<void> {
+    try {
+      await fetch(`${API_BASE_URL}/auth/clear`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        credentials: 'include'
+      });
+    } catch (error) {
+      // Ignore errors, this is just cleanup
+    }
+  }
+
   async login(password: string): Promise<LoginResponse> {
+    // First clear any old cookies
+    await this.clearCookies();
+    
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: this.getHeaders(),

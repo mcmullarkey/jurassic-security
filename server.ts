@@ -207,6 +207,15 @@ const answerSchema = Joi.object({
   answer: Joi.string().min(1).max(100).required().trim()
 });
 
+// Clear old auth cookies endpoint
+app.post('/api/auth/clear', (req, res) => {
+  // Clear any old JWT cookies that might be lingering
+  res.clearCookie('auth_token');
+  res.clearCookie('jwt_token'); 
+  res.clearCookie('quiz_session');
+  res.json({ success: true, message: 'Cookies cleared' });
+});
+
 // Auth endpoint - login with password (with rate limiting)
 app.post('/api/auth/login', authLimiter, (req, res) => {
   // Validate input
@@ -232,6 +241,10 @@ app.post('/api/auth/login', authLimiter, (req, res) => {
     });
     return res.status(401).json({ error: 'Invalid password' });
   }
+
+  // Clear any old JWT cookies that might be lingering from previous versions
+  res.clearCookie('auth_token');
+  res.clearCookie('jwt_token');
 
   // Initialize session - that's all we need!
   req.session.userId = 'quiz-user';
