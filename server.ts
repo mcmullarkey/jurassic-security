@@ -85,7 +85,7 @@ const authLimiter = rateLimit({
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? process.env.RENDER_EXTERNAL_URL || 'https://jurassic-security.onrender.com'
-    : 'http://localhost:5173',
+    : ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
 }));
 
@@ -101,7 +101,7 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'strict'
+    sameSite: 'lax'
   },
   name: 'quiz_session', // Custom session name
   rolling: true // Reset expiration on activity
