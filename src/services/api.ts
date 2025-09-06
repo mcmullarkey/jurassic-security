@@ -25,43 +25,16 @@ interface CompletionResponse {
   message: string;
 }
 
-interface CsrfResponse {
-  csrfToken: string;
-}
-
 class ApiService {
-  private csrfToken: string | null = null;
-
   private getHeaders() {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
     
-    if (this.csrfToken) {
-      headers['X-CSRF-Token'] = this.csrfToken;
-    }
-    
     return headers;
   }
 
-  async getCsrfToken(): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/csrf-token`, {
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch CSRF token');
-    }
-
-    const data: CsrfResponse = await response.json();
-    this.csrfToken = data.csrfToken;
-    return data.csrfToken;
-  }
-
   async login(password: string): Promise<LoginResponse> {
-    // Get CSRF token first
-    await this.getCsrfToken();
-    
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: this.getHeaders(),
@@ -96,11 +69,6 @@ class ApiService {
   }
 
   async submitAnswer(questionId: number, answer: string): Promise<AnswerResponse> {
-    // Ensure we have a CSRF token
-    if (!this.csrfToken) {
-      await this.getCsrfToken();
-    }
-    
     const response = await fetch(`${API_BASE_URL}/questions/${questionId}/answer`, {
       method: 'POST',
       headers: this.getHeaders(),
@@ -135,19 +103,11 @@ class ApiService {
   }
 
   async logout(): Promise<void> {
-    // Ensure we have a CSRF token
-    if (!this.csrfToken) {
-      await this.getCsrfToken();
-    }
-    
     await fetch(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
       headers: this.getHeaders(),
       credentials: 'include'
     });
-    
-    // Clear CSRF token after logout
-    this.csrfToken = null;
   }
 
   // Check auth by trying to fetch questions (server will return 401 if not authenticated)
