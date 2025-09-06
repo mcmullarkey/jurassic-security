@@ -8,8 +8,9 @@
     "dev:client": "vite",
     "server": "tsx watch server.ts",
     "build": "tsc -b && vite build",
+    "build:server": "tsc server.ts logger.ts --outDir dist --module es2022 --target es2020 --moduleResolution node --allowSyntheticDefaultImports --esModuleInterop --skipLibCheck",
     "start": "node dist/server.js",
-    "render-build": "npm install && npm run build && tsc server.ts --outDir dist && tsc logger.ts --outDir dist",
+    "render-build": "npm install && npm run build && npm run build:server",
     "lint": "eslint .",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"

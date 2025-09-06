@@ -9,7 +9,7 @@ import Joi from 'joi';
 import session from 'express-session';
 import csrf from 'csrf';
 import path from 'path';
-import { appLogger, securityLogger, logSecurityEvent, SecurityEvents } from './logger';
+import { appLogger, securityLogger, logSecurityEvent, SecurityEvents } from './logger.js';
 
 // Load server environment variables
 dotenv.config({ path: '.env.server' });
