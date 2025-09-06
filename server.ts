@@ -7,7 +7,6 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import Joi from 'joi';
 import session from 'express-session';
-import csrf from 'csrf';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { appLogger, securityLogger, logSecurityEvent, SecurityEvents } from './logger.js';
@@ -28,8 +27,7 @@ const requiredEnvVars = [
   'ANSWER_4',
   'SECRET_CODE',
   'JWT_SECRET',
-  'SESSION_SECRET',
-  'CSRF_SECRET'
+  'SESSION_SECRET'
 ];
 
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
@@ -43,7 +41,6 @@ if (missingEnvVars.length > 0) {
 // Extract environment variables after validation
 const JWT_SECRET = process.env.JWT_SECRET!;
 const SESSION_SECRET = process.env.SESSION_SECRET!;
-const CSRF_SECRET = process.env.CSRF_SECRET!;
 const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD!;
 
 // Validate JWT and session secret lengths for security
@@ -57,16 +54,8 @@ if (SESSION_SECRET.length < 32) {
   process.exit(1);
 }
 
-if (CSRF_SECRET.length < 32) {
-  console.error('❌ CSRF_SECRET must be at least 32 characters long for security');
-  process.exit(1);
-}
-
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Initialize CSRF protection
-const tokens = new csrf();
 
 // Security middleware
 app.use(helmet({
@@ -184,44 +173,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// CSRF protection middleware
-const csrfProtection = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // Skip CSRF for GET requests and token endpoint
-  if (req.method === 'GET' || req.path === '/api/csrf-token') {
-    return next();
-  }
-
-  const token = req.headers['x-csrf-token'] as string || req.body._csrf;
-  
-  if (!token) {
-    logSecurityEvent('CSRF_TOKEN_MISSING', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      endpoint: req.path,
-      additional: { method: req.method }
-    });
-    return res.status(403).json({ error: 'CSRF token required' });
-  }
-
-  // Get or create CSRF secret in session
-  if (!req.session.csrfSecret) {
-    req.session.csrfSecret = tokens.secretSync();
-  }
-
-  const isValid = tokens.verify(req.session.csrfSecret, token);
-  
-  if (!isValid) {
-    logSecurityEvent('CSRF_TOKEN_INVALID', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      endpoint: req.path,
-      additional: { method: req.method, sessionId: req.sessionID }
-    });
-    return res.status(403).json({ error: 'Invalid CSRF token' });
-  }
-
-  next();
-};
 
 // Extend session types
 declare module 'express-session' {
@@ -230,7 +181,6 @@ declare module 'express-session' {
     loginTime?: number;
     lastActivity?: number;
     isAuthenticated?: boolean;
-    csrfSecret?: string;
   }
 }
 
@@ -331,20 +281,8 @@ const answerSchema = Joi.object({
   answer: Joi.string().min(1).max(100).required().trim()
 });
 
-// CSRF token endpoint
-app.get('/api/csrf-token', (req, res) => {
-  // Get or create CSRF secret in session
-  if (!req.session.csrfSecret) {
-    req.session.csrfSecret = tokens.secretSync();
-  }
-  
-  const csrfToken = tokens.create(req.session.csrfSecret);
-  
-  res.json({ csrfToken });
-});
-
 // Auth endpoint - login with password (with rate limiting)
-app.post('/api/auth/login', authLimiter, csrfProtection, (req, res) => {
+app.post('/api/auth/login', authLimiter, (req, res) => {
   // Validate input
   const { error, value } = loginSchema.validate(req.body);
   if (error) {
@@ -410,7 +348,7 @@ app.get('/api/questions', authenticateToken, (req: AuthRequest, res) => {
 });
 
 // Logout endpoint
-app.post('/api/auth/logout', csrfProtection, (req, res) => {
+app.post('/api/auth/logout', (req, res) => {
   const sessionId = req.sessionID;
   const userId = req.session.userId;
   
@@ -445,7 +383,7 @@ app.post('/api/auth/logout', csrfProtection, (req, res) => {
 });
 
 // Submit answer (protected)
-app.post('/api/questions/:questionId/answer', authenticateToken, csrfProtection, (req: AuthRequest, res) => {
+app.post('/api/questions/:questionId/answer', authenticateToken, (req: AuthRequest, res) => {
   const questionId = parseInt(req.params.questionId);
   
   // Validate question ID
