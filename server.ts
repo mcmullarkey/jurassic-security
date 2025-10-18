@@ -283,49 +283,10 @@ app.post('/api/auth/clear', (req, res) => {
   res.json({ success: true, message: 'Cookies cleared' });
 });
 
-// Auth endpoint - login with password (with rate limiting)
+// Auth endpoint - no longer used (authentication removed)
+// Kept for backwards compatibility but always returns success
 app.post('/api/auth/login', authLimiter, (req, res) => {
-  // Validate input
-  const { error, value } = loginSchema.validate(req.body);
-  if (error) {
-    logSecurityEvent('SUSPICIOUS_REQUEST', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      endpoint: '/api/auth/login',
-      additional: { reason: 'Invalid input validation', error: error.details[0].message }
-    });
-    return res.status(400).json({ error: 'Invalid input: ' + error.details[0].message });
-  }
-
-  const { password } = value;
-
-  if (password !== ACCESS_PASSWORD) {
-    logSecurityEvent('LOGIN_FAILURE', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      endpoint: '/api/auth/login',
-      additional: { reason: 'Invalid password' }
-    });
-    return res.status(401).json({ error: 'Invalid password' });
-  }
-
-  // Clear any old JWT cookies that might be lingering from previous versions
-  res.clearCookie('auth_token');
-  res.clearCookie('jwt_token');
-
-  // Initialize session - that's all we need!
-  req.session.userId = 'quiz-user';
-  req.session.isAuthenticated = true;
-
-  logSecurityEvent('LOGIN_SUCCESS', {
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    userId: 'quiz-user',
-    endpoint: '/api/auth/login',
-    additional: { sessionId: req.sessionID }
-  });
-
-  res.json({ 
+  res.json({
     success: true,
     message: 'Authentication successful'
   });
