@@ -28,7 +28,7 @@ function CompletionScreen({}: CompletionScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 sm:p-8 max-w-sm sm:max-w-md mx-auto">
       <p className="text-lg sm:text-xl text-green-400 mb-6 font-semibold">
-        You've achieved Top Secret!
+        You did it!
       </p>
       
       <div className="bg-gray-800 border border-green-500 rounded-lg p-4 sm:p-6 mb-6 w-full">
