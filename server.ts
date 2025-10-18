@@ -223,7 +223,7 @@ const allQuestions: Question[] = [
   },
   {
     id: 11,
-    text: "Lab personnel access code required to report all findings + finish test",
+    text: "RESTRICTED. Science team access code REQUIRED to report findings + finish test",
     icon: "fa-key"
   }
 ];
