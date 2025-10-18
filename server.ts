@@ -77,9 +77,10 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      manifestSrc: ["'self'"],
     },
   },
 }));
@@ -387,11 +388,13 @@ app.get('/api/health', (req, res) => {
 
 // Serve React app in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(__dirname));
-  
+  // Server is compiled to dist/server/server.js, so we need to go up one level to dist/
+  const staticPath = path.join(__dirname, '..');
+  app.use(express.static(staticPath));
+
   // Handle React Router - serve index.html for all non-API routes
   app.get(/^(?!\/api).*/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'));
   });
 }
 
