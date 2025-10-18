@@ -169,8 +169,8 @@ interface AuthRequest extends express.Request {
   userId?: string;
 }
 
-// Quiz questions (without answers)
-const questions: Question[] = [
+// All available questions
+const allQuestions: Question[] = [
   {
     id: 1,
     text: "What color are the T-Rex's eyes?",
@@ -227,6 +227,29 @@ const questions: Question[] = [
     icon: "fa-key"
   }
 ];
+
+// Access code question IDs (one will be randomly selected)
+const accessCodeQuestionIds = [2, 3, 4, 5, 6, 7, 8];
+
+// Generate random question set for a session
+function getRandomQuestions(): Question[] {
+  // Pick 3 random access code questions
+  const shuffled = [...accessCodeQuestionIds].sort(() => Math.random() - 0.5);
+  const randomAccessCodeIds = shuffled.slice(0, 3);
+
+  // Build the question set: fixed questions + 3 random access code questions
+  const selectedQuestions = [
+    allQuestions.find(q => q.id === 1)!,  // T-Rex eyes
+    allQuestions.find(q => q.id === randomAccessCodeIds[0])!,  // Random access code 1
+    allQuestions.find(q => q.id === randomAccessCodeIds[1])!,  // Random access code 2
+    allQuestions.find(q => q.id === randomAccessCodeIds[2])!,  // Random access code 3
+    allQuestions.find(q => q.id === 9)!,  // Mosquito year
+    allQuestions.find(q => q.id === 10)!, // Milliliters
+    allQuestions.find(q => q.id === 11)!, // Lab personnel (always last)
+  ];
+
+  return selectedQuestions;
+}
 
 // Server-side answers (secure) - all validated to exist above
 // Questions with single answer
@@ -293,7 +316,9 @@ app.post('/api/auth/login', authLimiter, (req, res) => {
 });
 
 // Get questions (no auth required)
+// Returns a randomized set of questions for each request
 app.get('/api/questions', (req, res) => {
+  const questions = getRandomQuestions();
   res.json({ questions });
 });
 
