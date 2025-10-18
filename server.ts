@@ -20,10 +20,31 @@ dotenv.config({ path: '.env.server' });
 // Validate required environment variables
 const requiredEnvVars = [
   'ACCESS_PASSWORD',
-  'ANSWER_1', 
-  'ANSWER_2',
-  'ANSWER_3', 
-  'ANSWER_4',
+  'ANSWER_TREX_EYES',
+  'ANSWER_MECHANIC_1',
+  'ANSWER_MECHANIC_2',
+  'ANSWER_MECHANIC_3',
+  'ANSWER_ENGINEER_1',
+  'ANSWER_ENGINEER_2',
+  'ANSWER_ENGINEER_3',
+  'ANSWER_SECURITY_1',
+  'ANSWER_SECURITY_2',
+  'ANSWER_SECURITY_3',
+  'ANSWER_SPONSOR_1',
+  'ANSWER_SPONSOR_2',
+  'ANSWER_SPONSOR_3',
+  'ANSWER_JANITOR_1',
+  'ANSWER_JANITOR_2',
+  'ANSWER_JANITOR_3',
+  'ANSWER_LAWYER_1',
+  'ANSWER_LAWYER_2',
+  'ANSWER_LAWYER_3',
+  'ANSWER_TRAINER_1',
+  'ANSWER_TRAINER_2',
+  'ANSWER_TRAINER_3',
+  'ANSWER_MOSQUITO_YEAR',
+  'ANSWER_MILLILITERS',
+  'ANSWER_LAB_CODE',
   'SECRET_CODE',
   'SESSION_SECRET'
 ];
@@ -153,32 +174,79 @@ interface AuthRequest extends express.Request {
 const questions: Question[] = [
   {
     id: 1,
-    text: "How many flasks are in the lab?",
-    icon: "fa-flask"
+    text: "What color are the T-Rex's eyes?",
+    icon: "fa-eye"
   },
   {
     id: 2,
-    text: "How many test tubes are on the rack?",
-    icon: "fa-vial"
+    text: "Get a Mechanic access code",
+    icon: "fa-wrench"
   },
   {
     id: 3,
-    text: "What is the emergency evacuation code?",
-    icon: "fa-door-open"
+    text: "Get an Engineer access code",
+    icon: "fa-hard-hat"
   },
   {
     id: 4,
-    text: "How many security cameras monitor the perimeter?",
-    icon: "fa-video"
+    text: "Get a Security Guard access code",
+    icon: "fa-shield-halved"
+  },
+  {
+    id: 5,
+    text: "Get a Park Sponsor access code",
+    icon: "fa-briefcase"
+  },
+  {
+    id: 6,
+    text: "Get a Janitor access code",
+    icon: "fa-broom"
+  },
+  {
+    id: 7,
+    text: "Get a Lawyer access code",
+    icon: "fa-scale-balanced"
+  },
+  {
+    id: 8,
+    text: "Get a Dinosaur Trainer access code",
+    icon: "fa-graduation-cap"
+  },
+  {
+    id: 9,
+    text: "What year was this park's mosquito fossilized?",
+    icon: "fa-mosquito"
+  },
+  {
+    id: 10,
+    text: "How many milliliters of liquid are in all the lab glassware total?",
+    icon: "fa-flask"
+  },
+  {
+    id: 11,
+    text: "Lab personnel access code required to report all findings + finish test",
+    icon: "fa-key"
   }
 ];
 
 // Server-side answers (secure) - all validated to exist above
+// Questions with single answer
 const correctAnswers: Record<number, string> = {
-  1: process.env.ANSWER_1!,
-  2: process.env.ANSWER_2!, 
-  3: process.env.ANSWER_3!,
-  4: process.env.ANSWER_4!
+  1: process.env.ANSWER_TREX_EYES!,
+  9: process.env.ANSWER_MOSQUITO_YEAR!,
+  10: process.env.ANSWER_MILLILITERS!,
+  11: process.env.ANSWER_LAB_CODE!
+};
+
+// Questions with multiple possible correct answers (any one of these is correct)
+const multipleCorrectAnswers: Record<number, string[]> = {
+  2: [process.env.ANSWER_MECHANIC_1!, process.env.ANSWER_MECHANIC_2!, process.env.ANSWER_MECHANIC_3!],
+  3: [process.env.ANSWER_ENGINEER_1!, process.env.ANSWER_ENGINEER_2!, process.env.ANSWER_ENGINEER_3!],
+  4: [process.env.ANSWER_SECURITY_1!, process.env.ANSWER_SECURITY_2!, process.env.ANSWER_SECURITY_3!],
+  5: [process.env.ANSWER_SPONSOR_1!, process.env.ANSWER_SPONSOR_2!, process.env.ANSWER_SPONSOR_3!],
+  6: [process.env.ANSWER_JANITOR_1!, process.env.ANSWER_JANITOR_2!, process.env.ANSWER_JANITOR_3!],
+  7: [process.env.ANSWER_LAWYER_1!, process.env.ANSWER_LAWYER_2!, process.env.ANSWER_LAWYER_3!],
+  8: [process.env.ANSWER_TRAINER_1!, process.env.ANSWER_TRAINER_2!, process.env.ANSWER_TRAINER_3!]
 };
 
 // Simple session authentication middleware  
@@ -273,9 +341,10 @@ app.get('/api/questions', authenticateToken, (req: AuthRequest, res) => {
 // Submit answer (protected)
 app.post('/api/questions/:questionId/answer', authenticateToken, (req: AuthRequest, res) => {
   const questionId = parseInt(req.params.questionId);
-  
-  // Validate question ID
-  if (isNaN(questionId) || !correctAnswers[questionId]) {
+
+  // Validate question ID exists in either single or multiple answer maps
+  const validQuestion = correctAnswers[questionId] !== undefined || multipleCorrectAnswers[questionId] !== undefined;
+  if (isNaN(questionId) || !validQuestion) {
     return res.status(404).json({ error: 'Question not found' });
   }
 
@@ -286,7 +355,16 @@ app.post('/api/questions/:questionId/answer', authenticateToken, (req: AuthReque
   }
 
   const { answer } = value;
-  const isCorrect = answer === correctAnswers[questionId];
+  let isCorrect = false;
+
+  // Check if question has single answer
+  if (correctAnswers[questionId]) {
+    isCorrect = answer === correctAnswers[questionId];
+  }
+  // Check if question has multiple possible answers
+  else if (multipleCorrectAnswers[questionId]) {
+    isCorrect = multipleCorrectAnswers[questionId].includes(answer);
+  }
 
   res.json({
     correct: isCorrect,
