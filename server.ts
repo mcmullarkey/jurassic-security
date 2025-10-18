@@ -19,7 +19,6 @@ dotenv.config({ path: '.env.server' });
 
 // Validate required environment variables
 const requiredEnvVars = [
-  'ACCESS_PASSWORD',
   'ANSWER_TREX_EYES',
   'ANSWER_MECHANIC_1',
   'ANSWER_MECHANIC_2',
@@ -59,7 +58,6 @@ if (missingEnvVars.length > 0) {
 
 // Extract environment variables after validation
 const SESSION_SECRET = process.env.SESSION_SECRET!;
-const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD!;
 
 // Validate session secret length for security
 if (SESSION_SECRET.length < 32) {
@@ -333,14 +331,14 @@ app.post('/api/auth/login', authLimiter, (req, res) => {
   });
 });
 
-// Get questions (protected)
-app.get('/api/questions', authenticateToken, (req: AuthRequest, res) => {
+// Get questions (no auth required)
+app.get('/api/questions', (req, res) => {
   res.json({ questions });
 });
 
 
-// Submit answer (protected)
-app.post('/api/questions/:questionId/answer', authenticateToken, (req: AuthRequest, res) => {
+// Submit answer (no auth required)
+app.post('/api/questions/:questionId/answer', (req, res) => {
   const questionId = parseInt(req.params.questionId);
 
   // Validate question ID exists in either single or multiple answer maps
@@ -373,8 +371,8 @@ app.post('/api/questions/:questionId/answer', authenticateToken, (req: AuthReque
   });
 });
 
-// Get secret code (protected, only after all questions answered correctly)
-app.get('/api/completion', authenticateToken, (req: AuthRequest, res) => {
+// Get secret code (no auth required)
+app.get('/api/completion', (req, res) => {
   res.json({
     secretCode: process.env.SECRET_CODE!,
     message: 'Congratulations! You\'ve completed the security clearance test.'
@@ -387,21 +385,33 @@ app.get('/api/health', (req, res) => {
 });
 
 // Serve React app in production
-if (process.env.NODE_ENV === 'production') {
+// Check if we're running from the dist folder (production build)
+const isProduction = __dirname.includes('dist');
+
+if (isProduction) {
   // Server is compiled to dist/server/server.js, so we need to go up one level to dist/
   const staticPath = path.join(__dirname, '..');
+  console.log('📁 Serving static files from:', staticPath);
+  console.log('📁 Current directory:', __dirname);
+
   app.use(express.static(staticPath));
 
   // Handle React Router - serve index.html for all non-API routes
   app.get(/^(?!\/api).*/, (req, res) => {
-    res.sendFile(path.join(staticPath, 'index.html'));
+    const indexPath = path.join(staticPath, 'index.html');
+    console.log('📄 Serving index.html from:', indexPath);
+    res.sendFile(indexPath);
   });
+} else {
+  console.log('🔧 Running in development mode - static files served by Vite');
 }
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🔒 Authentication endpoint: http://localhost:${PORT}/api/auth/login`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📂 Running from: ${__dirname}`);
 });
 
 export default app;

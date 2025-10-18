@@ -6,7 +6,6 @@ import AnswerInput from './AnswerInput'
 import StartScreen from './StartScreen'
 import SecurityLevelBar from './SecurityLevelBar'
 import CompletionScreen from './CompletionScreen'
-import LoginScreen from './LoginScreen'
 import apiService from './services/api'
 
 interface Question {
@@ -18,7 +17,6 @@ interface Question {
 type QuizResult = 'correct' | 'incorrect' | null;
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [userAnswer, setUserAnswer] = useState<string>('');
@@ -28,60 +26,27 @@ function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  
+
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Check for existing auth on app start
+  // Load questions on app start
   useEffect(() => {
-    const checkExistingAuth = async () => {
+    const loadQuestions = async () => {
       try {
         setLoading(true);
-        const isAuthenticated = await apiService.checkAuth();
-        if (isAuthenticated) {
-          setIsLoggedIn(true);
-          // Questions are already loaded from checkAuth
-          const fetchedQuestions = await apiService.getQuestions();
-          setQuestions(fetchedQuestions);
-        }
-      } catch (error) {
-        // Not authenticated, which is fine
+        const fetchedQuestions = await apiService.getQuestions();
+        setQuestions(fetchedQuestions);
+        setError('');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load questions';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
-    checkExistingAuth();
+    loadQuestions();
   }, []);
-
-  const loadQuestions = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const fetchedQuestions = await apiService.getQuestions();
-      setQuestions(fetchedQuestions);
-      setError('');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load questions';
-      setError(errorMessage);
-      // Only log out if we're sure it's an authentication issue
-      if (err instanceof Error && err.message === 'Authentication expired') {
-        console.log('Authentication expired, logging out...');
-        setIsLoggedIn(false);
-        setHasStarted(false);
-      } else {
-        console.log('Non-auth error loading questions:', errorMessage);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = async (): Promise<void> => {
-    setIsLoggedIn(true);
-    // Add a small delay to ensure the login session is fully established
-    setTimeout(async () => {
-      await loadQuestions();
-    }, 100);
-  };
   
   const advanceToNextQuestion = (): void => {
     if (currentQuestionIndex < questions.length - 1) {
@@ -102,11 +67,11 @@ function App() {
 
   const handleSubmit = async (): Promise<void> => {
     if (!currentQuestion) return;
-    
+
     try {
       setLoading(true);
       const response = await apiService.submitAnswer(currentQuestion.id, userAnswer.trim());
-      
+
       if (response.correct) {
         handleCorrectAnswer();
       } else {
@@ -116,13 +81,6 @@ function App() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to submit answer';
       setError(errorMessage);
-      if (err instanceof Error && err.message === 'Authentication expired') {
-        console.log('Authentication expired during answer submit, logging out...');
-        setIsLoggedIn(false);
-        setHasStarted(false);
-      } else {
-        console.log('Non-auth error submitting answer:', errorMessage);
-      }
     } finally {
       setLoading(false);
     }
@@ -134,10 +92,6 @@ function App() {
     if (result === 'incorrect') return 'Try again!';
     return 'Submit Answer';
   };
-  
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={handleLogin} />;
-  }
 
   if (!hasStarted) {
     return <StartScreen onBegin={() => setHasStarted(true)} />;
