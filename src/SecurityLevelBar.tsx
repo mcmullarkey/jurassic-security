@@ -3,13 +3,16 @@ interface SecurityLevelBarProps {
   maxLevel?: number;
 }
 
-function SecurityLevelBar({ level, maxLevel = 5 }: SecurityLevelBarProps) {
+function SecurityLevelBar({ level, maxLevel = 8 }: SecurityLevelBarProps) {
   const levelNames: Record<number, string> = {
     1: "Trainee",
-    2: "Entry Level", 
+    2: "Entry Level",
     3: "Sensitive",
     4: "Confidential",
-    5: "Top Secret"
+    5: "Classified",
+    6: "Secret",
+    7: "Top Secret",
+    8: "Ultra Classified"
   };
 
   const progress = Math.min((level - 1) / (maxLevel - 1) * 100, 100);
