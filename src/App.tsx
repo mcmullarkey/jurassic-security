@@ -105,7 +105,7 @@ function App() {
       <SecurityLevelBar level={securityLevel} maxLevel={questions.length + 1} />
       <i className={`fa-solid ${currentQuestion.icon} text-white p-4 m-4 text-2xl sm:text-3xl`}></i>
       <QuestionText text={currentQuestion.text}/>
-      <AnswerInput value={userAnswer} onChange={setUserAnswer} />
+      <AnswerInput value={userAnswer} onChange={setUserAnswer} questionText={currentQuestion.text} />
       {error && <div className="text-red-400 text-sm mt-2">{error}</div>}
       <FancyButton onClick={handleSubmit} 
       text={getButtonText()} />

@@ -342,13 +342,33 @@ app.post('/api/questions/:questionId/answer', (req, res) => {
   const { answer } = value;
   let isCorrect = false;
 
+  // Helper to extract only numbers from a string
+  const extractNumbers = (str: string): string => {
+    return str.replace(/\D/g, '');
+  };
+
   // Check if question has single answer
   if (correctAnswers[questionId]) {
-    isCorrect = answer === correctAnswers[questionId];
+    // Question 1 (T-Rex eyes) is case-insensitive text
+    if (questionId === 1) {
+      isCorrect = answer.toLowerCase() === correctAnswers[questionId].toLowerCase();
+    }
+    // Questions 9, 10, 11 are numeric - strip non-numeric characters and compare
+    else if (questionId === 9 || questionId === 10 || questionId === 11) {
+      const numericAnswer = extractNumbers(answer);
+      const numericCorrect = extractNumbers(correctAnswers[questionId]);
+      isCorrect = numericAnswer === numericCorrect;
+    }
+    else {
+      isCorrect = answer === correctAnswers[questionId];
+    }
   }
-  // Check if question has multiple possible answers
+  // Check if question has multiple possible answers (access codes - strip non-numeric and compare)
   else if (multipleCorrectAnswers[questionId]) {
-    isCorrect = multipleCorrectAnswers[questionId].includes(answer);
+    const numericAnswer = extractNumbers(answer);
+    isCorrect = multipleCorrectAnswers[questionId].some(
+      correctAnswer => extractNumbers(correctAnswer) === numericAnswer
+    );
   }
 
   res.json({
