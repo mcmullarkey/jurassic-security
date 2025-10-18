@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import apiService from './services/api';
 import logoImage from './assets/jurassic-park-logo.jpg';
 
@@ -10,6 +10,7 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (): Promise<void> => {
     setLoading(true);
@@ -26,10 +27,20 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent): void => {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter') {
       handleSubmit();
     }
+  };
+
+  const handleFocus = (): void => {
+    // Delay to allow keyboard to appear first
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 300);
   };
 
   return (
@@ -57,12 +68,14 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
         </p>
         
         <div className="space-y-3 sm:space-y-4">
-          <input 
-            type="password" 
-            placeholder="Enter password..." 
+          <input
+            ref={inputRef}
+            type="password"
+            placeholder="Enter password..."
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
             className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
           />
           
