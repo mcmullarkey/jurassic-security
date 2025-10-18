@@ -1,3 +1,5 @@
+import logoImage from './assets/jurassic-park-logo.jpg';
+
 interface StartScreenProps {
   onBegin: () => void;
 }
@@ -6,10 +8,10 @@ function StartScreen({ onBegin }: StartScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 sm:p-8 relative">
       {/* Background logo */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover sm:bg-contain bg-center bg-no-repeat opacity-10"
         style={{
-          backgroundImage: "url('/src/assets/jurassic-park-logo.jpg')"
+          backgroundImage: `url(${logoImage})`
         }}
       ></div>
       

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import apiService from './services/api';
+import logoImage from './assets/jurassic-park-logo.jpg';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -34,10 +35,10 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-center px-4 py-8 sm:p-8 relative">
       {/* Background logo */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover sm:bg-contain bg-center bg-no-repeat opacity-10"
         style={{
-          backgroundImage: "url('/src/assets/jurassic-park-logo.jpg')"
+          backgroundImage: `url(${logoImage})`
         }}
       ></div>
       
